@@ -100,7 +100,7 @@ function App() {
 
           // Check search term
           if (searchTerms.length > 0) {
-            const context = normalizeText(`${route.nombre} ${route.operador} ${loc} ${prov}`);
+            const context = normalizeText(`${route.nombre} ${route.operador} ${route.tipo} ${loc} ${prov}`);
             return searchTerms.every(term => context.includes(term));
           }
 
@@ -131,9 +131,9 @@ function App() {
         
         <div className="search-container">
           <input 
-            type="text" 
-            className="search-input" 
-            placeholder="🔍 Buscar por localidad o pueblo..." 
+            type="text"
+            className="search-input"
+            placeholder="🔍 Buscar por localidad, empresa o tipo..." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
