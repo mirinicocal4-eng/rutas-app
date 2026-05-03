@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import './index.css';
 import rutasData from './data/rutas.json';
 import ProvinceCard from './components/ProvinceCard';
@@ -12,7 +12,7 @@ function App() {
 
   // Transform data: Group by Province -> Origin Locality
   // Also extract unique operators and types
-  const { transformedData, operators, serviceTypes, provincesList } = useMemo(() => {
+  const memoizedData = useMemo(() => {
     const result = {};
     const operatorsSet = new Set();
     const typesSet = new Set();
@@ -75,16 +75,27 @@ function App() {
     };
   }, []);
 
+  const { transformedData, operators, serviceTypes, provincesList } = memoizedData || { 
+    transformedData: {}, operators: [], serviceTypes: [], provincesList: [] 
+  };
+
   const filteredData = useMemo(() => {
     const normalizeText = (text) => {
-      return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[-_.,]/g, " ").toLowerCase();
+      if (!text) return "";
+      return text.normalize("NFD")
+                 .replace(/[\u0300-\u036f]/g, "")
+                 .replace(/[-_.,]/g, " ")
+                 .toLowerCase()
+                 .trim();
     };
 
-    const searchTerms = searchTerm.trim() ? normalizeText(searchTerm).split(/\s+/).filter(Boolean) : [];
+    const cleanSearch = normalizeText(searchTerm);
+    const searchTerms = cleanSearch ? cleanSearch.split(/\s+/).filter(Boolean) : [];
+    
     const result = {};
 
     Object.keys(transformedData).forEach(prov => {
-      // Province filter
+      // Province filter (via dropdown)
       if (selectedProvince !== 'all' && prov !== selectedProvince) {
         return;
       }
@@ -107,13 +118,14 @@ function App() {
           }
 
           // Check search term
-          if (searchTerm.trim()) {
-            if (exactMatch) {
-              // Exact locality match (normalized)
-              return normalizeText(loc) === normalizeText(searchTerm);
+          if (cleanSearch) {
+            const isHyphenSearch = searchTerm.trim().endsWith('-');
+            if (exactMatch || isHyphenSearch) {
+              // Exact locality match
+              return normalizeText(loc) === cleanSearch;
             } else {
               // Flexible context search
-              const context = normalizeText(`${route.nombre} ${route.operador} ${route.tipo} ${loc} ${prov}`);
+              const context = normalizeText(`${route.nombre} ${route.operador} ${route.tipo} ${loc}`);
               return searchTerms.every(term => context.includes(term));
             }
           }
@@ -136,6 +148,7 @@ function App() {
   }, [searchTerm, selectedOperator, selectedType, selectedProvince, exactMatch, transformedData]);
 
   const provinces = Object.keys(filteredData).sort();
+  const isSearching = searchTerm.trim().length > 0 || selectedOperator !== 'all' || selectedType !== 'all' || selectedProvince !== 'all';
 
   return (
     <div className="app-container">
@@ -147,7 +160,7 @@ function App() {
           <input 
             type="text"
             className="search-input"
-            placeholder="🔍 Buscar por ruta, localidad, empresa o tipo..." 
+            placeholder="🔍 Buscar ruta, operador o localidad..." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -162,7 +175,7 @@ function App() {
               onChange={(e) => setSelectedProvince(e.target.value)}
             >
               <option value="all">Todas las provincias</option>
-              {provincesList.map(p => (
+              {provincesList && provincesList.map(p => (
                 <option key={p} value={p}>{p}</option>
               ))}
             </select>
@@ -175,8 +188,8 @@ function App() {
               value={selectedOperator}
               onChange={(e) => setSelectedOperator(e.target.value)}
             >
-              <option value="all">Todas</option>
-              {operators.map(op => (
+              <option value="all">Todas las empresas</option>
+              {operators && operators.map(op => (
                 <option key={op} value={op}>{op}</option>
               ))}
             </select>
@@ -189,19 +202,23 @@ function App() {
               value={selectedType}
               onChange={(e) => setSelectedType(e.target.value)}
             >
-              <option value="all">Todos</option>
-              {serviceTypes.map(type => (
-                <option key={type} value={type}>{type}</option>
+              <option value="all">Todos los tipos</option>
+              {serviceTypes && serviceTypes.map(t => (
+                <option key={t} value={t}>{t}</option>
               ))}
             </select>
           </div>
 
-          <div className="filter-group toggle-group">
-            <label className="filter-label">Búsqueda Exacta</label>
-            <div className="toggle-wrapper" onClick={() => setExactMatch(!exactMatch)}>
-              <div className={`toggle-slider ${exactMatch ? 'active' : ''}`}></div>
-              <span className="toggle-text">{exactMatch ? 'Localidad' : 'Global'}</span>
-            </div>
+          <div className="filter-group">
+            <label className="filter-label">Búsqueda</label>
+            <select 
+              className="filter-select"
+              value={exactMatch ? 'exact' : 'flexible'}
+              onChange={(e) => setExactMatch(e.target.value === 'exact')}
+            >
+              <option value="flexible">Global (Todo)</option>
+              <option value="exact">Solo Capital/Pueblo</option>
+            </select>
           </div>
         </div>
       </header>
@@ -209,7 +226,7 @@ function App() {
       {provinces.length === 0 ? (
         <div className="no-results">
           <h2>No se encontraron resultados para "{searchTerm}"</h2>
-          <p>Prueba buscando con otra localidad o pueblo.</p>
+          <p>Prueba con otra búsqueda o limpia los filtros.</p>
         </div>
       ) : (
         <main className="provinces-grid">
@@ -218,6 +235,7 @@ function App() {
               key={prov} 
               province={prov} 
               localitiesData={filteredData[prov]} 
+              isSearching={isSearching}
             />
           ))}
         </main>

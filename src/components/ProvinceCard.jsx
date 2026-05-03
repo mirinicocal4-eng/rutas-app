@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+/* eslint-disable react-hooks/set-state-in-effect */
+import { useState, useEffect, useMemo } from 'react';
 import LocalityCard from './LocalityCard';
 
-const ProvinceCard = ({ province, localitiesData }) => {
+const ProvinceCard = ({ province, localitiesData, isSearching }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedLetter, setSelectedLetter] = useState(null);
 
@@ -11,20 +12,34 @@ const ProvinceCard = ({ province, localitiesData }) => {
   const totalRoutes = localities.reduce((total, loc) => total + localitiesData[loc].length, 0);
 
   // Group localities by first letter
-  const groupedLocalities = {};
-  localities.forEach(loc => {
-    let firstLetter = loc.charAt(0).toUpperCase();
-    // Normalize accents (Á -> A, etc.)
-    firstLetter = firstLetter.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    if (!/[A-Z]/.test(firstLetter)) firstLetter = '#';
+  const groupedLocalities = useMemo(() => {
+    const grouped = {};
+    localities.forEach(loc => {
+      let firstLetter = loc.charAt(0).toUpperCase();
+      // Normalize accents (Á -> A, etc.)
+      firstLetter = firstLetter.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      if (!/[A-Z]/.test(firstLetter)) firstLetter = '#';
 
-    if (!groupedLocalities[firstLetter]) {
-      groupedLocalities[firstLetter] = [];
-    }
-    groupedLocalities[firstLetter].push(loc);
-  });
+      if (!grouped[firstLetter]) {
+        grouped[firstLetter] = [];
+      }
+      grouped[firstLetter].push(loc);
+    });
+    return grouped;
+  }, [localities]);
 
   const availableLetters = Object.keys(groupedLocalities).sort();
+
+  // Auto-expand and auto-select when searching
+  useEffect(() => {
+    if (isSearching) {
+      setIsOpen(true);
+      if (availableLetters.length === 1) {
+        setSelectedLetter(availableLetters[0]);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSearching, availableLetters]);
 
   // When data changes (e.g. searching), if the selected letter has no data, unselect it
   useEffect(() => {

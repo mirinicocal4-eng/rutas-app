@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 const LocalityCard = ({ localityName, routes }) => {
   const [isOpen, setIsOpen] = useState(false);
