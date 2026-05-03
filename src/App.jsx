@@ -133,7 +133,7 @@ function App() {
           <input 
             type="text"
             className="search-input"
-            placeholder="🔍 Buscar por localidad, empresa o tipo..." 
+            placeholder="🔍 Buscar por ruta, localidad, empresa o tipo..." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
