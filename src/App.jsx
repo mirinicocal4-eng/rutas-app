@@ -74,7 +74,7 @@ function App() {
 
   const filteredData = useMemo(() => {
     const normalizeText = (text) => {
-      return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+      return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/-/g, " ").toLowerCase();
     };
 
     const searchTerms = searchTerm.trim() ? normalizeText(searchTerm).split(/\s+/).filter(Boolean) : [];
