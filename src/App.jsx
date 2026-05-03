@@ -7,10 +7,12 @@ function App() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedOperator, setSelectedOperator] = useState('all');
   const [selectedType, setSelectedType] = useState('all');
+  const [selectedProvince, setSelectedProvince] = useState('all');
+  const [exactMatch, setExactMatch] = useState(false);
 
   // Transform data: Group by Province -> Origin Locality
   // Also extract unique operators and types
-  const { transformedData, operators, serviceTypes } = useMemo(() => {
+  const { transformedData, operators, serviceTypes, provincesList } = useMemo(() => {
     const result = {};
     const operatorsSet = new Set();
     const typesSet = new Set();
@@ -68,7 +70,8 @@ function App() {
     return { 
       transformedData: result, 
       operators: Array.from(operatorsSet).sort(), 
-      serviceTypes: Array.from(typesSet).sort() 
+      serviceTypes: Array.from(typesSet).sort(),
+      provincesList: Object.keys(result).sort()
     };
   }, []);
 
@@ -81,6 +84,11 @@ function App() {
     const result = {};
 
     Object.keys(transformedData).forEach(prov => {
+      // Province filter
+      if (selectedProvince !== 'all' && prov !== selectedProvince) {
+        return;
+      }
+
       const localities = transformedData[prov];
       const filteredLocalities = {};
       let hasMatchInProv = false;
@@ -99,9 +107,15 @@ function App() {
           }
 
           // Check search term
-          if (searchTerms.length > 0) {
-            const context = normalizeText(`${route.nombre} ${route.operador} ${route.tipo} ${loc} ${prov}`);
-            return searchTerms.every(term => context.includes(term));
+          if (searchTerm.trim()) {
+            if (exactMatch) {
+              // Exact locality match (normalized)
+              return normalizeText(loc) === normalizeText(searchTerm);
+            } else {
+              // Flexible context search
+              const context = normalizeText(`${route.nombre} ${route.operador} ${route.tipo} ${loc} ${prov}`);
+              return searchTerms.every(term => context.includes(term));
+            }
           }
 
           return true;
@@ -119,7 +133,7 @@ function App() {
     });
 
     return result;
-  }, [searchTerm, selectedOperator, selectedType, transformedData]);
+  }, [searchTerm, selectedOperator, selectedType, selectedProvince, exactMatch, transformedData]);
 
   const provinces = Object.keys(filteredData).sort();
 
@@ -141,13 +155,27 @@ function App() {
 
         <div className="filters-container">
           <div className="filter-group">
-            <label className="filter-label">Empresa de Autobús</label>
+            <label className="filter-label">Provincia</label>
+            <select 
+              className="filter-select"
+              value={selectedProvince}
+              onChange={(e) => setSelectedProvince(e.target.value)}
+            >
+              <option value="all">Todas las provincias</option>
+              {provincesList.map(p => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="filter-group">
+            <label className="filter-label">Empresa</label>
             <select 
               className="filter-select"
               value={selectedOperator}
               onChange={(e) => setSelectedOperator(e.target.value)}
             >
-              <option value="all">Todas las empresas</option>
+              <option value="all">Todas</option>
               {operators.map(op => (
                 <option key={op} value={op}>{op}</option>
               ))}
@@ -155,17 +183,25 @@ function App() {
           </div>
 
           <div className="filter-group">
-            <label className="filter-label">Tipo de Servicio</label>
+            <label className="filter-label">Tipo</label>
             <select 
               className="filter-select"
               value={selectedType}
               onChange={(e) => setSelectedType(e.target.value)}
             >
-              <option value="all">Todos los tipos</option>
+              <option value="all">Todos</option>
               {serviceTypes.map(type => (
                 <option key={type} value={type}>{type}</option>
               ))}
             </select>
+          </div>
+
+          <div className="filter-group toggle-group">
+            <label className="filter-label">Búsqueda Exacta</label>
+            <div className="toggle-wrapper" onClick={() => setExactMatch(!exactMatch)}>
+              <div className={`toggle-slider ${exactMatch ? 'active' : ''}`}></div>
+              <span className="toggle-text">{exactMatch ? 'Localidad' : 'Global'}</span>
+            </div>
           </div>
         </div>
       </header>
