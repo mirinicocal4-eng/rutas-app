@@ -26,12 +26,14 @@ function App() {
       return name;
     };
     
+    const normalizeTextForDedup = (name) => {
+      return name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[-_.,\s–—]/g, '').toLowerCase().trim();
+    };
+
+    const allRoutes = [];
+
     Object.keys(rutasData).forEach(rawProv => {
       const prov = normalizeProvince(rawProv);
-
-      if (!result[prov]) {
-        result[prov] = {};
-      }
 
       Object.keys(rutasData[rawProv]).forEach(comp => {
         operatorsSet.add(comp);
@@ -41,19 +43,48 @@ function App() {
           const normalizedType = route.tipo.trim().charAt(0).toUpperCase() + route.tipo.trim().slice(1).toLowerCase();
           typesSet.add(normalizedType);
           
-          // Extraer la localidad de inicio (lo que está antes del guión)
-          let origin = route.nombre.split('-')[0].trim();
+          // Extraer la localidad de inicio (lo que está antes del guión o guión largo)
+          let origin = route.nombre.split(/[-–—]/)[0].trim();
           if (!origin) origin = "Varias";
           
-          if (!result[prov][origin]) {
-            result[prov][origin] = [];
-          }
-          
-          result[prov][origin].push({
-            nombre: route.nombre,
-            tipo: normalizedType, // Usar el tipo normalizado aquí también
-            operador: comp
-          });
+          const normRouteKey = normalizeTextForDedup(route.nombre) + '|' + normalizeTextForDedup(normalizedType) + '|' + normalizeTextForDedup(comp);
+          allRoutes.push({ key: normRouteKey, prov, comp, origin, nombre: route.nombre, tipo: normalizedType });
+        });
+      });
+    });
+
+    const byKey = {};
+    allRoutes.forEach(item => {
+      if (!byKey[item.key]) byKey[item.key] = [];
+      byKey[item.key].push(item);
+    });
+
+    Object.values(byKey).forEach(items => {
+      const provs = new Set(items.map(i => i.prov));
+      let bestProv = items[0].prov;
+      
+      if (provs.size > 1) {
+        const originNorm = normalizeTextForDedup(items[0].origin);
+        bestProv = Array.from(provs).find(p => {
+          const pNorm = normalizeTextForDedup(p);
+          return originNorm === pNorm || originNorm.includes(pNorm) || pNorm.includes(originNorm);
+        }) || items[0].prov;
+      }
+      
+      items.forEach(item => {
+        // Ignorar si hay duplicado interprovincial y esta no es la provincia origen
+        if (provs.size > 1 && item.prov !== bestProv) return;
+
+        if (!result[item.prov]) {
+          result[item.prov] = {};
+        }
+        if (!result[item.prov][item.origin]) {
+          result[item.prov][item.origin] = [];
+        }
+        result[item.prov][item.origin].push({
+          nombre: item.nombre,
+          tipo: item.tipo,
+          operador: item.comp
         });
       });
     });
@@ -150,6 +181,22 @@ function App() {
   const provinces = Object.keys(filteredData).sort();
   const isSearching = searchTerm.trim().length > 0 || selectedOperator !== 'all' || selectedType !== 'all' || selectedProvince !== 'all';
 
+  const groupedOperators = useMemo(() => {
+    if (!operators) return [];
+    const grouped = {};
+    operators.forEach(op => {
+      let firstLetter = op.charAt(0).toUpperCase();
+      firstLetter = firstLetter.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      if (!/[A-Z]/.test(firstLetter)) firstLetter = '#';
+      if (!grouped[firstLetter]) grouped[firstLetter] = [];
+      grouped[firstLetter].push(op);
+    });
+    return Object.keys(grouped).sort().map(letter => ({
+      letter,
+      operators: grouped[letter].sort()
+    }));
+  }, [operators]);
+
   return (
     <div className="app-container">
       <header>
@@ -189,8 +236,12 @@ function App() {
               onChange={(e) => setSelectedOperator(e.target.value)}
             >
               <option value="all">Todas las empresas</option>
-              {operators && operators.map(op => (
-                <option key={op} value={op}>{op}</option>
+              {groupedOperators.map(group => (
+                <optgroup key={group.letter} label={group.letter}>
+                  {group.operators.map(op => (
+                    <option key={op} value={op}>{op}</option>
+                  ))}
+                </optgroup>
               ))}
             </select>
           </div>
@@ -240,6 +291,11 @@ function App() {
           ))}
         </main>
       )}
+
+      <footer className="app-footer">
+        <p>Datos basados en las Rutas Bonificadas de la Junta de Castilla y León.</p>
+        <p>Consulta siempre la versión oficial y actualizada en <a href="https://www.buscyl.es" target="_blank" rel="noopener noreferrer">buscyl.es</a></p>
+      </footer>
     </div>
   );
 }
