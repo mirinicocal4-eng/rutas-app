@@ -32,6 +32,23 @@ const LocalityCard = ({ localityName, routes }) => {
                 <span>🚌 Operador:</span>
                 <span style={{color: '#cbd5e1'}}>{route.operador}</span>
               </div>
+              
+              {(route.tipo.toLowerCase().includes('demanda') || route.tipo.toLowerCase().includes('conjunta')) && (
+                <div className="booking-info">
+                  <div className="booking-phone">
+                    <span>📞 Reserva:</span>
+                    <a href="tel:900204020">900 20 40 20</a>
+                  </div>
+                  <a 
+                    href="https://www.reservastransportedemandajcyl.es/" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="booking-link"
+                  >
+                    Reserva Online ↗
+                  </a>
+                </div>
+              )}
             </div>
           ))}
         </div>
