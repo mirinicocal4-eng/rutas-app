@@ -3,6 +3,7 @@ import './index.css';
 import rutasData from './data/rutas.json';
 import ProvinceCard from './components/ProvinceCard';
 import CompaniesView from './components/CompaniesView';
+import CustomCompanySelect from './components/CustomCompanySelect';
 
 function App() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -249,20 +250,11 @@ function App() {
 
           <div className="filter-group">
             <label className="filter-label">Empresa</label>
-            <select 
-              className="filter-select"
-              value={selectedOperator}
-              onChange={(e) => setSelectedOperator(e.target.value)}
-            >
-              <option value="all">Todas las empresas</option>
-              {groupedOperators.map(group => (
-                <optgroup key={group.letter} label={group.letter}>
-                  {group.operators.map(op => (
-                    <option key={op} value={op}>{op}</option>
-                  ))}
-                </optgroup>
-              ))}
-            </select>
+            <CustomCompanySelect 
+              groupedOperators={groupedOperators}
+              selectedOperator={selectedOperator}
+              onChange={setSelectedOperator}
+            />
           </div>
 
           <div className="filter-group">
