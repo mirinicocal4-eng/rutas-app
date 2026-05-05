@@ -34,12 +34,11 @@ const ProvinceCard = ({ province, localitiesData, isSearching }) => {
   useEffect(() => {
     if (isSearching) {
       setIsOpen(true);
-      if (availableLetters.length === 1) {
+      if (availableLetters.length === 1 && selectedLetter !== availableLetters[0]) {
         setSelectedLetter(availableLetters[0]);
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSearching, availableLetters]);
+  }, [isSearching, availableLetters, selectedLetter]);
 
   // When data changes (e.g. searching), if the selected letter has no data, unselect it
   useEffect(() => {

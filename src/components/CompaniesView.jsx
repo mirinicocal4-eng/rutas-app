@@ -22,12 +22,14 @@ const CompaniesView = ({ dataByCompany, isSearching }) => {
 
   const availableLetters = Object.keys(groupedCompanies).sort();
 
+  // Auto-select letter if searching and only one is available
   useEffect(() => {
-    if (isSearching && availableLetters.length === 1) {
+    if (isSearching && availableLetters.length === 1 && selectedLetter !== availableLetters[0]) {
       setSelectedLetter(availableLetters[0]);
     }
-  }, [isSearching, availableLetters]);
+  }, [isSearching, availableLetters, selectedLetter]);
 
+  // Reset selected letter if it's no longer available
   useEffect(() => {
     if (selectedLetter && !groupedCompanies[selectedLetter]) {
       setSelectedLetter(null);
