@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import './index.css';
 import rutasData from './data/rutas.json';
 import ProvinceCard from './components/ProvinceCard';
+import CompaniesView from './components/CompaniesView';
 
 function App() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -9,6 +10,7 @@ function App() {
   const [selectedType, setSelectedType] = useState('all');
   const [selectedProvince, setSelectedProvince] = useState('all');
   const [exactMatch, setExactMatch] = useState(false);
+  const [viewMode, setViewMode] = useState('provinces');
 
   // Transform data: Group by Province -> Origin Locality
   // Also extract unique operators and types
@@ -181,6 +183,23 @@ function App() {
   const provinces = Object.keys(filteredData).sort();
   const isSearching = searchTerm.trim().length > 0 || selectedOperator !== 'all' || selectedType !== 'all' || selectedProvince !== 'all';
 
+  const filteredDataByCompany = useMemo(() => {
+    const result = {};
+    Object.keys(filteredData).forEach(prov => {
+      Object.keys(filteredData[prov]).forEach(loc => {
+        filteredData[prov][loc].forEach(route => {
+          if (!result[route.operador]) result[route.operador] = [];
+          result[route.operador].push({
+            ...route,
+            provincia: prov,
+            localidad: loc
+          });
+        });
+      });
+    });
+    return result;
+  }, [filteredData]);
+
   const groupedOperators = useMemo(() => {
     if (!operators) return [];
     const grouped = {};
@@ -272,6 +291,23 @@ function App() {
             </select>
           </div>
         </div>
+
+        <div className="view-toggle" style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginTop: '2rem' }}>
+          <button 
+            className={`toggle-btn ${viewMode === 'provinces' ? 'active' : ''}`} 
+            onClick={() => setViewMode('provinces')}
+            style={{ padding: '0.5rem 1rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: viewMode === 'provinces' ? 'var(--accent)' : 'rgba(255,255,255,0.05)', color: '#fff', cursor: 'pointer', transition: 'all 0.3s ease' }}
+          >
+            Vista por Provincias
+          </button>
+          <button 
+            className={`toggle-btn ${viewMode === 'companies' ? 'active' : ''}`} 
+            onClick={() => setViewMode('companies')}
+            style={{ padding: '0.5rem 1rem', borderRadius: '8px', border: '1px solid var(--glass-border)', background: viewMode === 'companies' ? 'var(--accent)' : 'rgba(255,255,255,0.05)', color: '#fff', cursor: 'pointer', transition: 'all 0.3s ease' }}
+          >
+            Vista por Empresas
+          </button>
+        </div>
       </header>
 
       {provinces.length === 0 ? (
@@ -279,7 +315,7 @@ function App() {
           <h2>No se encontraron resultados para "{searchTerm}"</h2>
           <p>Prueba con otra búsqueda o limpia los filtros.</p>
         </div>
-      ) : (
+      ) : viewMode === 'provinces' ? (
         <main className="provinces-grid">
           {provinces.map((prov) => (
             <ProvinceCard 
@@ -289,6 +325,10 @@ function App() {
               isSearching={isSearching}
             />
           ))}
+        </main>
+      ) : (
+        <main>
+          <CompaniesView dataByCompany={filteredDataByCompany} isSearching={isSearching} />
         </main>
       )}
 
