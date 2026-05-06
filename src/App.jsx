@@ -157,7 +157,7 @@ function App() {
               return normalizeText(loc) === cleanSearch;
             } else {
               // Flexible context search
-              const context = normalizeText(`${route.nombre} ${route.operador} ${route.tipo} ${loc}`);
+              const context = normalizeText(`${route.nombre} ${loc}`);
               return searchTerms.every(term => context.includes(term));
             }
           }
@@ -204,11 +204,28 @@ function App() {
         <h1>Rutas Bonificadas</h1>
         <p>Explora las rutas de transporte por provincia y localidad de inicio</p>
         
+        <div className="usage-tips">
+          <div className="tip-step">
+            <span className="tip-number">1</span>
+            <span>Pulsa una <strong>provincia</strong></span>
+          </div>
+          <span className="tip-arrow">➔</span>
+          <div className="tip-step">
+            <span className="tip-number">2</span>
+            <span>Elige una <strong>letra</strong></span>
+          </div>
+          <span className="tip-arrow">➔</span>
+          <div className="tip-step">
+            <span className="tip-number">3</span>
+            <span>Explora las <strong>rutas</strong></span>
+          </div>
+        </div>
+        
         <div className="search-container">
           <input 
             type="text"
             className="search-input"
-            placeholder="🔍 Buscar ruta, operador o localidad..." 
+            placeholder="🔍 Buscar ruta o localidad de inicio..." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
