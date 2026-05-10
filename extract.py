@@ -5,9 +5,19 @@ import requests
 from bs4 import BeautifulSoup
 import os
 import tempfile
+import hashlib
 
 url = "https://www.tramitacastillayleon.jcyl.es/web/jcyl/AdministracionElectronica/es/Plantilla100Detalle/1251181050732/Tramite/1285524936298/Tramite"
 output_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "src", "data", "rutas.json")
+checksum_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "src", "data", "checksum.txt")
+
+def get_file_hash(file_path):
+    sha256_hash = hashlib.sha256()
+    with open(file_path, "rb") as f:
+        # Read in chunks to be memory efficient
+        for byte_block in iter(lambda: f.read(4096), b""):
+            sha256_hash.update(byte_block)
+    return sha256_hash.hexdigest()
 
 def clean_text(text):
     if not text:
@@ -49,6 +59,22 @@ def download_pdf():
 
 def main():
     pdf_path = download_pdf()
+    
+    # --- Checksum logic ---
+    new_hash = get_file_hash(pdf_path)
+    old_hash = ""
+    
+    if os.path.exists(checksum_path):
+        with open(checksum_path, "r") as f:
+            old_hash = f.read().strip()
+            
+    if new_hash == old_hash:
+        print(f"El Checksum ({new_hash}) coincide. El PDF no ha cambiado. Terminando robot.")
+        os.remove(pdf_path)
+        return
+    
+    print(f"Nuevo Checksum detectado: {new_hash}. Iniciando extracción...")
+    # ----------------------
     
     data = []
     
@@ -113,6 +139,11 @@ def main():
         json.dump(categorized, f, ensure_ascii=False, indent=2)
 
     print(f"Datos guardados en {output_path}")
+    
+    # Save the new checksum
+    with open(checksum_path, "w") as f:
+        f.write(new_hash)
+    print(f"Checksum actualizado: {new_hash}")
     
     # Clean up
     os.remove(pdf_path)

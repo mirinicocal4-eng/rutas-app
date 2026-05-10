@@ -51,7 +51,7 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: "Auto-update rutas data from PDF"
-          file_pattern: "src/data/rutas.json"
+          file_pattern: "src/data/rutas.json src/data/checksum.txt"
 
       - name: Set up Node
         uses: actions/setup-node@v4
