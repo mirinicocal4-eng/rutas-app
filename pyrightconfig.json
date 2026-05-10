@@ -1,0 +1,22 @@
+{
+    "venvPath": ".",
+    "venv": ".venv",
+    "include": [
+        "extract.py"
+    ],
+    "exclude": [
+        "**/node_modules",
+        "**/__pycache__",
+        "**/__pyrefly_virtual__/**",
+        ".venv",
+        "src",
+        "dist",
+        "public",
+        ".github"
+    ],
+    "reportMissingImports": false,
+    "pythonVersion": "3.14",
+    "typeCheckingMode": "off",
+    "useLibraryCodeForTypes": false,
+    "reportMissingTypeStubs": false
+}
