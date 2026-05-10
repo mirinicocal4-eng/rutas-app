@@ -44,4 +44,25 @@ Si deseas ejecutar este proyecto en local:
 4.  Abre `http://localhost:5173` en tu navegador.
 
 ---
-*Desarrollado para mejorar la accesibilidad a la información del transporte público.*
+
+## ⚖️ Licencia
+
+**Copyright (c) 2024 Miriam de Nicolás Calzada - TODOS LOS DERECHOS RESERVADOS.**
+
+Queda prohibida la reproducción, distribución o modificación de este software sin permiso explícito de la autora. Este proyecto se distribuye como un producto comercial bajo licencia de uso privada.
+
+Para más información sobre la adquisición de licencias de uso, consulte el archivo [LICENSE](LICENSE) o contacte con la autora.
+
+---
+
+## 👤 Autor
+
+Desarrollado por **Miriam de Nicolás Calzada**. 
+
+*Este proyecto ha sido creado con el objetivo de mejorar la accesibilidad a la información del transporte público y proteger la propiedad intelectual del autor.*
+
+---
+
+<div align="center">
+  <p>Desarrollado con ❤️ para mejorar la movilidad ciudadana.</p>
+</div>
